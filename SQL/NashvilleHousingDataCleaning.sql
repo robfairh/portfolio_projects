@@ -1,23 +1,31 @@
 /* 
+This script hosts the queries for cleaning data in MySQL.
 Project idea from: https://www.youtube.com/watch?v=8rO7ztF4NtU
 
-NEED TO CLEAN THIS UP:
-Do it based on kaggle's data.
-
-To obtain the data go to:
-* Download data 'Nashville Housing Data for Data Cleaning.xlsx' from https://github.com/AlexTheAnalyst/PortfolioProjects/tree/main
-* Open file in LibreOffice replace all empty cells with NULL
+Convert data in .xlsx format into .csv:
+* To obtain the raw data go to: https://github.com/AlexTheAnalyst/PortfolioProjects/tree/main
+* Download 'Nashville Housing Data for Data Cleaning.xlsx'
+* Open file in LibreOffice and replace all empty cells with NULL
 * Save as .csv
 * Remove spaces from file name
-* First column is 'UniqueID ', manually fixed to 'UniqueID'
-* Create Table header in sql: csvsql --dialect mysql --snifflimit 100000 NashvilleHousingDataforDataCleaning.csv > NashvilleHeader.sql
-* Had to manually change data types for SaleDate and SoldAsVacant to VARCHAR
+* Open .csv file and manually change first column 'UniqueID ' to 'UniqueID'
 
-sudo cp NashvilleHousingDataforDataCleaning.csv /var/lib/mysql-files/
+Input data into database:
+* Create Table header in sql: csvsql --dialect mysql --snifflimit 100000 NashvilleHousingDataforDataCleaning.csv > NashvilleHeader.sql
+* Manually change data types for SaleDate and SoldAsVacant to VARCHAR
+* sudo cp NashvilleHousingDataforDataCleaning.csv /var/lib/mysql-files/
+
 */
 
+-- Create and select database
+CREATE DATABASE Nashville;
+USE Nashville;
+
+-- Create table
+CREATE TABLE NashvilleHousingDataforDataCleaning;
 ALTER TABLE NashvilleHousingDataforDataCleaning MODIFY COLUMN SalePrice VARCHAR(25);
 
+-- Load data into table
 LOAD DATA INFILE '/var/lib/mysql-files/NashvilleHousingDataforDataCleaning.csv'
 INTO TABLE NashvilleHousingDataforDataCleaning
 FIELDS TERMINATED BY ','
@@ -25,6 +33,7 @@ ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 ROWS;
 
+-- Convert data type for SaleDate
 Convert SaleDate from VARCHAR format to DATE format:
 
 SELECT SaleDate FROM NashvilleHousingDataforDataCleaning LIMIT 5;
@@ -35,33 +44,31 @@ SELECT nSaleDate FROM NashvilleHousingDataforDataCleaning LIMIT 5;
 ALTER TABLE NashvilleHousingDataforDataCleaning DROP COLUMN SaleDate;
 ALTER TABLE NashvilleHousingDataforDataCleaning CHANGE COLUMN nSaleDate SaleDate DATE;
 
-
+-- Convert data type for SalePrice
 Convert SalePrice from VARCHAR format to INT format:
 
 SELECT SalePrice FROM NashvilleHousingDataforDataCleaning LIMIT 5;
 ALTER TABLE NashvilleHousingDataforDataCleaning ADD COLUMN nSalePrice INT AFTER SalePrice;
 UPDATE NashvilleHousingDataforDataCleaning SET nSalePrice = REPLACE(REPLACE(REPLACE(SalePrice, '$', ''), ',', ''), '"', '');
+
 SELECT nSalePrice FROM NashvilleHousingDataforDataCleaning WHERE nSalePrice LIKE '%,%' LIMIT 5;
 ALTER TABLE NashvilleHousingDataforDataCleaning DROP COLUMN SalePrice;
 ALTER TABLE NashvilleHousingDataforDataCleaning CHANGE COLUMN nSalePrice SalePrice INT;
 
--- Rename Table
+-- Rename table
 ALTER TABLE NashvilleHousingDataforDataCleaning RENAME NashvilleHousing;
 
 
+
 -- Cleaning the data
+SELECT * FROM NashvilleHousing LIMIT 10;
 
--- Standardize Date Format
--- Done
 
--- Populate Property Address data
-SELECT PropertyAddress
-FROM NashvilleHousing
-WHERE PropertyAddress IS NULL;
-
-SELECT ParcelID
-FROM NashvilleHousing
-WHERE ParcelID IS NULL;
+-- 1) 
+-- We need to populate PropertyAddress, as there are many entries that are NULL
+-- And for that we will use ParcelID that it is not NULL
+SELECT PropertyAddress FROM NashvilleHousing WHERE PropertyAddress IS NULL;
+SELECT ParcelID FROM NashvilleHousing WHERE ParcelID IS NULL;
 
 -- What we are doing here is using the fact that ParcelID is not NULL
 -- and that usually, for the same ParcelID, the PropertyAddress is the same.
@@ -81,19 +88,17 @@ JOIN NashvilleHousing AS b
 SET a.PropertyAddress = IFNULL(a.PropertyAddress, b.PropertyAddress)
 WHERE a.PropertyAddress IS NULL;
 
-SELECT PropertyAddress
-FROM NashvilleHousing
-WHERE PropertyAddress IS NULL;
+-- Sanity check, to ensure that the NULLs in PropertyAddress are gone
+SELECT PropertyAddress FROM NashvilleHousing WHERE PropertyAddress IS NULL;
 
--- Breaking out Adress into Individual Columns: Address, City, State
-SELECT PropertyAddress
-FROM NashvilleHousing
-LIMIT 10;
+
+-- 2)
+-- Break out PropertyAddress into individual columns: Address, City, State
+SELECT PropertyAddress FROM NashvilleHousing LIMIT 10;
 
 SELECT SUBSTRING(PropertyAddress, 1, LOCATE(',', PropertyAddress)-1) AS Address,
-SUBSTRING(PropertyAddress, LOCATE(',', PropertyAddress)+1, LENGTH(PropertyAddress)) AS City
-FROM NashvilleHousing
-LIMIT 10;
+       SUBSTRING(PropertyAddress, LOCATE(',', PropertyAddress)+1, LENGTH(PropertyAddress)) AS City
+FROM NashvilleHousing LIMIT 10;
 
 ALTER TABLE NashvilleHousing ADD COLUMN PropertySplitAddress VARCHAR(40) AFTER PropertyAddress;
 UPDATE NashvilleHousing SET PropertySplitAddress = SUBSTRING(PropertyAddress, 1, LOCATE(',', PropertyAddress)-1);
@@ -103,7 +108,9 @@ ALTER TABLE NashvilleHousing ADD COLUMN PropertySplitCity VARCHAR(40) AFTER Prop
 UPDATE NashvilleHousing SET PropertySplitCity = SUBSTRING(PropertyAddress, LOCATE(',', PropertyAddress)+1, LENGTH(PropertyAddress));
 SELECT PropertySplitCity FROM NashvilleHousing LIMIT 5;
 
--- Same with Owner Address
+
+-- 3)
+-- Break out OwnerAddress into individual columns: Address, City, State
 SELECT OwnerAddress FROM NashvilleHousing LIMIT 5;
 
 SELECT SUBSTRING_INDEX(SUBSTRING_INDEX(OwnerAddress, ',', 1), ',', -1) AS Address,
@@ -123,13 +130,10 @@ ALTER TABLE NashvilleHousing ADD COLUMN OwnerSplitState VARCHAR(40) AFTER OwnerS
 UPDATE NashvilleHousing SET OwnerSplitState = SUBSTRING_INDEX(SUBSTRING_INDEX(OwnerAddress, ',', 3), ',', -1);
 SELECT OwnerSplitState FROM NashvilleHousing LIMIT 5;
 
--- Change Y/N to Yes/No in "Sold as Vacant" field
-https://youtu.be/8rO7ztF4NtU?feature=shared&t=2018
 
-SELECT DISTINCT(SoldAsVacant), COUNT(SoldAsVacant)
-FROM NashvilleHousing
-GROUP BY SoldAsVacant
-ORDER BY 2;
+-- 4)
+-- Change Y/N to Yes/No in SoldAsVacant
+SELECT DISTINCT(SoldAsVacant), COUNT(SoldAsVacant) FROM NashvilleHousing GROUP BY SoldAsVacant ORDER BY 2;
 
 SELECT SoldAsVacant,
     CASE WHEN SoldAsVacant = 'Y' THEN 'Yes'
@@ -146,7 +150,9 @@ SET SoldAsVacant =
         ELSE SoldAsVacant
     END;
 
--- Remove Duplicates
+
+-- 5)
+-- Remove duplicates: first we look at it, then, we delete
 WITH RowNumCTE AS(
     SELECT *,
         ROW_NUMBER() OVER (
@@ -171,9 +177,9 @@ DELETE FROM NashvilleHousing
     ON NashvilleHousing.UniqueID = RowNumCTE.UniqueID
 WHERE RowNumCTE.row_num > 1;
 
--- Delete Unused Columns
-SELECT * FROM NashvilleHousing LIMIT 10;
 
+-- 6)
+-- Delete unused columns
 ALTER TABLE NashvilleHousing DROP COLUMN OwnerAddress;
 ALTER TABLE NashvilleHousing DROP COLUMN TaxDistrict;
 ALTER TABLE NashvilleHousing DROP COLUMN PropertyAddress;
