@@ -9,8 +9,10 @@ Convert data in .xlsx format into .csv:
 * Save as .csv
 * Remove spaces from file name
 * Open .csv file and manually change first column 'UniqueID ' to 'UniqueID'
+* This creates the file: 'NashvilleHousingDataforDataCleaning.csv' that is included in this repo
 
 Input data into database:
+* pip install csvkit
 * Create Table header in sql: csvsql --dialect mysql --snifflimit 100000 NashvilleHousingDataforDataCleaning.csv > NashvilleHeader.sql
 * Manually change data types for SaleDate and SoldAsVacant to VARCHAR
 * sudo cp NashvilleHousingDataforDataCleaning.csv /var/lib/mysql-files/
@@ -22,7 +24,7 @@ CREATE DATABASE Nashville;
 USE Nashville;
 
 -- Create table
-CREATE TABLE NashvilleHousingDataforDataCleaning;
+-- Copy paste contents of 'NashvilleHeader.sql' into mysql
 ALTER TABLE NashvilleHousingDataforDataCleaning MODIFY COLUMN SalePrice VARCHAR(25);
 
 -- Load data into table

@@ -1,25 +1,39 @@
-* Download data:
-The data can be downloaded from [here](https://ourworldindata.org/covid-deaths).
-The format of the data changes slightly to what is shown in the video.
-To exactly have the same data as in the video, I dowloaded from [here](https://github.com/AlexTheAnalyst/PortfolioProjects/tree/main) the files:
-- CovidDeaths.xlsx
-- CovidVaccinations.xlsx
+/*
+This script hosts the queries for exploring data in MySQL.
+Project idea from: https://www.youtube.com/watch?v=qfyynHBFOsM&list=PLUaB-1hjhk8FE_XZ87vPPSfHqb6OcM0cF&index=19
 
-* Open in Excel and replace blank cells with NULL, export to .csv
+Convert data in .xlsx format into .csv:
+* Download data from here: https://ourworldindata.org/covid-deaths
+* Or to exactly follow along the video, go here: https://github.com/AlexTheAnalyst/PortfolioProjects/tree/main
+* Download 'CovidDeaths.xlsx'
+* Download 'CovidVaccinations.xlsx'
+* Open files in LibreOffice and replace all empty cells with NULL
+* Save as .csv
+* This creates the files:
+  * 'CovidDeaths.csv' (included in the repo)
+  * 'CovidVaccinations.csv' (included in the repo)
 
-Importing csv into sql:
-* first create table, either manually or with the following:
 
-pip install csvkit
-csvsql --dialect mysql --snifflimit 100000 CovidDeaths.csv > CovidDeaths.sql
-csvsql --dialect mysql --snifflimit 100000 CovidVaccinations.csv > CovidVaccinations.sql
+Input data into database:
+* pip install csvkit
+* Create Table headers in sql:
+  * csvsql --dialect mysql --snifflimit 100000 CovidDeaths.csv > CovidDeaths.sql
+  * csvsql --dialect mysql --snifflimit 100000 CovidVaccinations.csv > CovidVaccinations.sql
+* Manually change data type for date to VARCHAR
+* sudo cp CovidDeaths.csv /var/lib/mysql-files/CovidDeaths.csv
+* sudo cp CovidVaccinations.csv /var/lib/mysql-files/CovidVaccinations.csv
 
-* then copy paste the contents of those files into mysql to create the tables
-* then import the csv to fill out the tables
+*/
 
-sudo cp CovidDeaths.csv /var/lib/mysql-files/CovidDeaths.csv
-sudo cp CovidVaccinations.csv /var/lib/mysql-files/CovidVaccinations.csv
+-- Create and select database
+CREATE DATABASE Covid;
+USE Covid;
 
+-- Create tables
+-- Copy paste contents of 'CovidDeaths.sql' into mysql
+-- Copy paste contents of 'CovidVaccinations.sql' into mysql
+
+-- Load data into tables
 LOAD DATA INFILE '/var/lib/mysql-files/CovidDeaths.csv'
 INTO TABLE CovidDeaths
 FIELDS TERMINATED BY ','
@@ -34,9 +48,7 @@ ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 ROWS;
 
-
-* Convert date from string format to date format:
-
+-- Convert date from string format to date format
 SELECT date FROM CovidDeaths LIMIT 5;
 ALTER TABLE CovidDeaths ADD COLUMN ndate DATE AFTER date;
 UPDATE CovidDeaths SET ndate = STR_TO_DATE(date, "%m/%d/%Y");
@@ -48,6 +60,22 @@ ALTER TABLE CovidVaccinations ADD COLUMN ndate DATE AFTER date;
 UPDATE CovidVaccinations SET ndate = STR_TO_DATE(date, "%m/%d/%Y");
 ALTER TABLE CovidVaccinations DROP COLUMN date;
 ALTER TABLE CovidVaccinations CHANGE COLUMN ndate date DATE;
+
+
+
+
+
+
+Importing csv into sql:
+* first create table, either manually or with the following:
+
+
+
+
+
+
+
+
 
 
 -- Select Data that we are going to be using
