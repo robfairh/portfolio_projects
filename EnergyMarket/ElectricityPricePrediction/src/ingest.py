@@ -58,7 +58,7 @@ def load_price_data(csv_path: str) -> pd.DataFrame:
     # to 2 consecutive hours
     df["lmp_usd_mwh"] = df["lmp_usd_mwh"].ffill(limit=2)
 
-    # Drop rows with remaining NaN (longer gaps are reliable inputs)
+    # Drop rows with remaining NaN (longer gaps are not reliable inputs)
     df = df.dropna(subset=["lmp_usd_mwh"])
 
     missing_pct = df["lmp_usd_mwh"].isna().mean()

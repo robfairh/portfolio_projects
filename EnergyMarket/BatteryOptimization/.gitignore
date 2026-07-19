@@ -1,0 +1,11 @@
+# Generated figures — run the notebook to reproduce
+outputs/
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Virtual environment
+.venv/
+*.egg-info/

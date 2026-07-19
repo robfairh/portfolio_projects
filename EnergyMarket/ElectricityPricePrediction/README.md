@@ -88,9 +88,11 @@ visualize.py:
 
 # Using this repo
 
-Requires **Python 3.9+**.
+Requires **Python 3.9+** and a virtual environment:
 
 ```bash
+python -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 jupyter notebook forecasting.ipynb
 ```
