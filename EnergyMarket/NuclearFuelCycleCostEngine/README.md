@@ -155,7 +155,7 @@ Historical Gas price:
 * Columns: "Month","Henry Hub Natural Gas Spot Price Dollars per Million Btu"
 
 Historical Electricity price:
-* [PJM Electricity Price]: https://www.eia.gov/electricity/wholesalemarkets/csv/pjm_lmp_da_hr_zones_{year}.csv
+* PJM Electricity Price: ```https://www.eia.gov/electricity/wholesalemarkets/csv/pjm_lmp_da_hr_zones_{year}.csv```
 * Columns: "UTC", "Allegheny Power System LMP"
 
 Assumptions:
