@@ -124,10 +124,10 @@ $$
 ## Gas Cost
 
 $$
-MC_{gas} = P_{gas} \cdot HR_{gas} + V_{\text{O \& M}} + P_{CO_2} \cdot m_{CO_2}
+MC_{gas} = P_{gas} \cdot HR_{gas} + V_{\mathrm{O\&M}} + P_{CO_2} \cdot m_{CO_2}
 $$
 where $P_{gas}$ is the gas price per MMBtu, $HR_{gas}$ is the heat rate in
-MMBtu/MWh,  $V_{\text{O \& M}}$ is the variable operation and maintenance cost per MWh, $P_{CO_2}$ is the price per metric ton of CO$\_2$, and $m\_{CO_2}$ the emitted mass of CO$\_2$ per MWh.
+MMBtu/MWh,  $V_{\mathrm{O\&M}}$ is the variable operation and maintenance cost per MWh, $P_{CO_2}$ is the price per metric ton of CO$\_2$, and $m\_{CO_2}$ the emitted mass of CO$\_2$ per MWh.
 
 
 ## Nuclear Gas Spread
